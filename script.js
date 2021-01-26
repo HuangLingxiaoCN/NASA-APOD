@@ -6,15 +6,14 @@ const loader = document.querySelector('.loader');
 
 // NASA API
 const count = 10;
-const apiKey = 'DEMO_KEY';
+const apiKey = 'hj1cTVIW2u9qQiy2A75da6hp9TRMWzOEOa7V3sLg';
 const apiUrl = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}&count=${count}`;
 
 let resultsArray = [];
+let favorites = {};
 
 function updateDOM() {
-    console.log("This is updateDOM")
     resultsArray.forEach((result) => {
-        console.log('iteration');
         // =================================== Create html elements ============================================
         // Card Container
         const card = document.createElement('div');
@@ -41,6 +40,7 @@ function updateDOM() {
         const saveText = document.createElement('p');
         saveText.classList.add('clickable');
         saveText.textContent = 'Add to Favorites';
+        saveText.setAttribute('onclick', `saveFavorite('${result.url}')`);  // to add onclick event attribute, use setAttribute function
         // Card Text
         const cardText = document.createElement('p');
         cardText.textContent = result.explanation;
@@ -51,15 +51,17 @@ function updateDOM() {
         const date = document.createElement('strong');
         date.textContent = result.date;
         // Copyright
+        const copyrightResult = result.copyright === undefined ? '' : result.copyright;
         const copyright = document.createElement('span');
-        copyright.textContent = `${result.copyright}`;
+        copyright.textContent = `${copyrightResult}`;
 
         // =================================== Append child elements to their parents ============================
+        // Pay attention from small element to large element
         footer.append(date, copyright);
-        cardBody.append(cardTitle, cardText, saveText, footer);
+        cardBody.append(cardTitle, saveText, cardText, footer);
         link.appendChild(image);
         card.append(link, cardBody);
-        console.log(card);
+        imagesContainer.appendChild(card);
     });
 }
 
@@ -67,12 +69,32 @@ function updateDOM() {
 async function getImages() {
     try {
         const response = await fetch(apiUrl);
-        const resultsArray = await response.json();
+        resultsArray = await response.json();
         console.log(resultsArray);
         updateDOM();
     } catch (error) {
         console.log('Error',error);
     }
+}
+
+// Add result to Favorites
+function saveFavorite(itemUrl) {
+    // Loop through Results Array to select Favorite
+    resultsArray.forEach((item) => {
+            // If item.url matches itemUrl and favorites does not have itemUrl
+        if (item.url === itemUrl && !favorites[itemUrl]) {
+            favorites[itemUrl] = item;
+
+            // Show Save Confirmation for 2 seconds
+            saveConfirmed.hidden = false;
+            setTimeout(() => {
+                saveConfirmed.hidden = true;
+            }, 2000);
+
+            // Set Favorites to localStorage
+            localStorage.setItem('nasaFavorites', JSON.stringify(favorites));
+        }
+    });
 }
 
 // On load
